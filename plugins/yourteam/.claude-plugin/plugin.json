@@ -1,0 +1,10 @@
+{
+  "name": "yourteam",
+  "version": "1.0.0",
+  "description": "A multi-agent AI software team (CEO, CTO, developers, QA and specialists the CTO hires) that builds your product phase by phase, each step in a fresh Claude Code session, with an interactive browser dashboard.",
+  "author": {
+    "name": "Adi-Hulan"
+  },
+  "license": "Apache-2.0",
+  "keywords": ["multi-agent", "orchestration", "dashboard", "qa", "planning"]
+}

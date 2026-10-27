@@ -1,0 +1,19 @@
+{
+  "name": "yourteam",
+  "owner": {
+    "name": "Adi-Hulan"
+  },
+  "metadata": {
+    "description": "YourTeam: a multi-agent AI software team for Claude Code, with a live dashboard."
+  },
+  "plugins": [
+    {
+      "name": "yourteam",
+      "source": "./plugins/yourteam",
+      "description": "A CEO, CTO, developers and QA that build your product phase by phase in fresh Claude Code sessions, driven from an interactive browser dashboard.",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "keywords": ["multi-agent", "orchestration", "dashboard", "qa", "planning"]
+    }
+  ]
+}

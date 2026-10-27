@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>YourTeam</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23000'/%3E%3Cpath d='M16 7l9 16H7z' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    try { const t = localStorage.getItem('yt-theme'); if (t) document.documentElement.dataset.theme = t; } catch {}
+  </script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="main-wrap">
+      <header class="topbar" id="topbar"></header>
+      <main id="main" class="main"></main>
+    </div>
+  </div>
+  <div id="cmdk" class="cmdk" hidden></div>
+  <div id="toasts" class="toasts"></div>
+  <dialog id="dialog"><form method="dialog" id="dialog-form"></form></dialog>
+  <script src="app.js"></script>
+</body>
+</html>
