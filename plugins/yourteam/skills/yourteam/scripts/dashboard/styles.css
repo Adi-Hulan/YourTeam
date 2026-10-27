@@ -94,7 +94,7 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 @keyframes fade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
 
 .sb-head { display: flex; align-items: center; gap: 10px; padding: 14px 14px 10px; }
-.sb-logo { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, #3291ff, #7c3aed 60%, #ff4d8d); flex: none; }
+.sb-logo { width: 26px; height: 26px; flex: none; display: block; }
 .sb-name { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sb-sub { font-size: 12px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .find { margin: 4px 12px 10px; display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 8px 0 10px; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-2); cursor: pointer; background: var(--bg); }

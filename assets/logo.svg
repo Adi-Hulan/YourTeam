@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 110" width="110" height="110">
+  <title>YourTeam</title>
+  <rect x="0.5" y="0.5" width="109" height="109" rx="21.5" fill="#0a0a0a" stroke="#242424"/>
+  <rect x="18" y="18" width="33" height="33" rx="9" fill="#FFFFFF"/>
+  <rect x="59" y="18" width="33" height="33" rx="9" fill="#FFFFFF"/>
+  <rect x="18" y="59" width="33" height="33" rx="9" fill="#FFFFFF"/>
+  <rect x="59" y="59" width="33" height="33" rx="9" fill="#0070F3"/>
+  <g fill="#0a0a0a">
+    <circle cx="29" cy="33" r="2.8"/>
+    <circle cx="40" cy="33" r="2.8"/>
+    <circle cx="70" cy="33" r="2.8"/>
+    <circle cx="81" cy="33" r="2.8"/>
+    <circle cx="29" cy="74" r="2.8"/>
+    <circle cx="40" cy="74" r="2.8"/>
+    <circle cx="70" cy="74" r="2.8"/>
+  </g>
+  <path d="M78 74H85" stroke="#0a0a0a" stroke-width="2.8" stroke-linecap="round"/>
+</svg>

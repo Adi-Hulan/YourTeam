@@ -469,7 +469,7 @@
     };
     if (S.chatActive?.kind === 'cto-chat') badges.cto = '<span class="dot blue pulse"></span>';
     return `
-      <div class="sb-head"><span class="sb-logo"></span><div class="grow"><div class="sb-name" title="${esc(S.projectDir)}">${esc(S.state.project)}</div><div class="sb-sub">YourTeam${S.demo ? ' · demo' : ''}</div></div></div>
+      <div class="sb-head"><img class="sb-logo" src="logo.svg" alt=""><div class="grow"><div class="sb-name" title="${esc(S.projectDir)}">${esc(S.state.project)}</div><div class="sb-sub">YourTeam${S.demo ? ' · demo' : ''}</div></div></div>
       <div class="find" data-cmd>${ic('search')}<span>Find…</span><kbd>Ctrl K</kbd></div>
       <nav class="nav">${NAV.map((g) => g.map(([id, icon, label]) => `<a href="#${id}" class="${ui.view === id ? 'on' : ''}" data-key="nav-${id}">${ic(icon)}<span>${label}</span>${badges[id] ? `<span class="count-wrap" style="margin-left:auto;display:flex">${badges[id]}</span>` : ''}</a>`).join('')).join('<div class="sep"></div>')}</nav>
       <div class="sb-foot"><span id="conn" class="conn-dot ${connected ? 'ok' : 'bad'}"></span><span id="conn-text">${connected ? 'Live' : 'Connecting…'}</span><span class="grow"></span><button class="btn ghost icon sm" data-theme-toggle title="Theme">${ic(themeIcon())}</button></div>`;
