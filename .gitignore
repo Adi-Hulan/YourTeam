@@ -5,3 +5,6 @@ node_modules/
 Thumbs.db
 .claude/
 CLAUDE.local.md
+
+# Original, uncompressed demo video (README uses assets/yourteam-demo.mp4)
+assets/Video.mp4
