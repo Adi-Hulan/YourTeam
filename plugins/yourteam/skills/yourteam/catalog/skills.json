@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "note": "References only. YourTeam downloads a skill from GitHub only after the customer selects it, and pins the exact commit.",
+  "skills": [
+    {
+      "id": "emil-design-eng",
+      "name": "Emil Kowalski: Design Engineering",
+      "author": "Emil Kowalski",
+      "repo": "emilkowalski/skills",
+      "path": "skills/emil-design-eng",
+      "ref": "main",
+      "license": "MIT",
+      "group": "design",
+      "category": "Design and animation",
+      "description": "Emil Kowalski's philosophy on UI polish, component design, animation decisions and the invisible details that make software feel great.",
+      "recommendedFor": ["frontend", "designer", "fullstack", "mobile"],
+      "hasScripts": false
+    },
+    {
+      "id": "ponytail",
+      "name": "Ponytail",
+      "author": "Dietrich Gebert",
+      "repo": "DietrichGebert/ponytail",
+      "path": "skills/ponytail",
+      "ref": "main",
+      "license": "MIT",
+      "group": "code-style",
+      "category": "Simpler code",
+      "description": "Lazy senior dev mode: the smallest change that fully solves the task, without dropping validation, error handling, security or accessibility.",
+      "recommendedFor": ["backend", "frontend", "fullstack", "mobile", "devops", "database", "data-ml"],
+      "hasScripts": false
+    },
+    {
+      "id": "impeccable",
+      "name": "Impeccable",
+      "author": "Paul Bakaus",
+      "repo": "pbakaus/impeccable",
+      "path": ".claude/skills/impeccable",
+      "ref": "main",
+      "license": "Apache-2.0",
+      "group": "design",
+      "category": "Frontend design system",
+      "description": "Design, critique, audit and polish frontend interfaces: hierarchy, layout, typography, color, motion, UX copy, accessibility and responsive behavior, with rules against generic AI-looking UI.",
+      "recommendedFor": ["frontend", "designer", "fullstack"],
+      "hasScripts": true
+    },
+    {
+      "id": "taste-skill",
+      "name": "Taste Skill",
+      "author": "Leonxlnx",
+      "repo": "Leonxlnx/taste-skill",
+      "path": "skills/taste-skill",
+      "ref": "main",
+      "license": "MIT",
+      "group": "design",
+      "category": "Art direction for websites",
+      "description": "Anti-slop art direction for landing pages and marketing sites, distilled from curated gallery sites, with a real-browser inspector and a screenshot look-and-fix loop.",
+      "recommendedFor": ["frontend", "designer"],
+      "hasScripts": true
+    }
+  ]
+}

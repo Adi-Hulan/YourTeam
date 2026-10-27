@@ -10,6 +10,7 @@ import { resolveClaudeBin, runClaude, toEntries } from './claude.mjs';
 import * as git from './git.mjs';
 import * as P from './prompts.mjs';
 import { AppRunner } from './apprunner.mjs';
+import { SkillLibrary, readCatalog, parseGithubUrl } from './skills.mjs';
 import { LESSONS_FILE, USER_DIR, MOCK_CLAUDE } from './paths.mjs';
 
 export const DEFAULT_CONFIG = {
@@ -92,6 +93,7 @@ export class Orchestrator extends EventEmitter {
     this.loopRunning = false;
     this.wakeAgain = false;
     this.app = new AppRunner(store);
+    this.skillLib = new SkillLibrary();
   }
 
   // ---------- state helpers ----------
@@ -239,6 +241,9 @@ export class Orchestrator extends EventEmitter {
       st.phaseSettings ||= {};
       st.changeOrders ||= [];
       st.cto ||= { threads: [], activeThread: null };
+      st.skills ||= { selected: [], custom: [] };
+      // A download interrupted by a restart has to be started again.
+      for (const sk of st.skills.selected) if (sk.status === 'downloading') Object.assign(sk, { status: 'error', error: 'The download was interrupted. Select the skill again.' });
       for (const co of st.changeOrders) if (co.status === 'queued') co.status = 'proposed';
     });
     const st = this.state();
@@ -393,8 +398,11 @@ export class Orchestrator extends EventEmitter {
     });
     if (channel === 'build') this.event('session', `${agent.name || agentId} started ${kind}${phase ? ` (${phase})` : ''}`, { agent: agentId, phase, sessionId: id });
 
-    const system = P.roleSystem(this.store, agent);
+    const skills = this.skillsFor(agentId);
+    const system = P.roleSystem(this.store, agent) + P.skillsNote(skills);
     const args = this.buildArgs(agent, { resumeId, sessionUuid, addDirs: [P.TEMPLATES_DIR, ...addDirs], system, model, partial });
+    for (const sk of skills) args.push('--plugin-dir', sk.pack);
+    rec.skills = skills.map((sk) => sk.id);
     const seenTools = new Set();
     let lastFlush = 0;
     const flush = (force) => {
@@ -825,7 +833,7 @@ export class Orchestrator extends EventEmitter {
   async runPlanning() {
     const st = this.state();
     const feedback = st.planFeedback || null;
-    const res = await this.planWithRetries((errors) => P.planPrompt({ existingCode: st.existingCode, lessons: this.lessons(), feedback, errors, mode: st.mode }), 'plan');
+    const res = await this.planWithRetries((errors) => P.planPrompt({ existingCode: st.existingCode, lessons: this.lessons(), feedback, errors, mode: st.mode, skillCatalog: this.catalog() }), 'plan');
     if (res.ok) this.mutate((s) => (s.planFeedback = null));
     this.afterPlan(res);
   }
@@ -866,7 +874,7 @@ export class Orchestrator extends EventEmitter {
     if (!this.config().approval.plan) return this.approvePlan();
     this.resolveInboxWhere((i) => i.kind === 'plan', 'superseded');
     this.setStatus('plan_review');
-    this.addInbox({ type: 'approval', kind: 'plan', title: 'Review the plan and the team', text: 'The CTO wrote the plan and hired the team. Review them in the Plan tab, change anything by chatting with the CTO, then approve.', options: ['approve'] });
+    this.addInbox({ type: 'approval', kind: 'plan', title: 'Review the plan and the team', text: 'The CTO wrote the plan and hired the team. Review them in the Plan tab, choose skills for the agents in the Skills tab, change anything by chatting with the CTO, then approve.', options: ['approve'] });
   }
 
   approvePlan() {
@@ -1344,8 +1352,59 @@ export class Orchestrator extends EventEmitter {
           if (co && ['proposed', 'failed', 'queued'].includes(co.status)) co.status = 'rejected';
         });
         return { ok: true };
+      case 'skill-select': {
+        const entry = this.catalog().find((e) => e.id === a.id);
+        need(entry, 'Unknown skill');
+        const agents = this.cleanAgents(a.agents);
+        need(agents.length, 'Pick at least one agent for this skill');
+        let start = false;
+        this.mutate((s) => {
+          const list = s.skills.selected;
+          const cur = list.find((x) => x.id === entry.id);
+          if (cur && cur.status !== 'error') cur.agents = agents;
+          else {
+            if (cur) list.splice(list.indexOf(cur), 1);
+            list.push({ id: entry.id, name: entry.name, repo: entry.repo, path: entry.path, agents, status: 'downloading', addedAt: now() });
+            start = true;
+          }
+        });
+        // Downloads run in the background; the dashboard shows progress from state.json.
+        if (start) this.downloadSkill(entry);
+        return { ok: true };
+      }
+      case 'skill-agents': {
+        const agents = this.cleanAgents(a.agents);
+        this.mutate((s) => {
+          const cur = s.skills.selected.find((x) => x.id === a.id);
+          if (cur) cur.agents = agents;
+        });
+        return { ok: true };
+      }
+      case 'skill-remove':
+        this.mutate((s) => (s.skills.selected = s.skills.selected.filter((x) => x.id !== a.id)));
+        this.event('skills', `Removed skill ${a.id}`);
+        return { ok: true };
+      case 'skill-add-url': {
+        const ref = parseGithubUrl(a.url);
+        const base = (ref.path.split('/').filter(Boolean).pop() || ref.repo.split('/')[1]).toLowerCase().replace(/[^a-z0-9-]/g, '-');
+        let id = `gh-${base}`;
+        if (this.catalog().some((e) => e.id === id && (e.repo !== ref.repo || e.path !== ref.path))) id = `gh-${ref.repo.split('/')[0].toLowerCase()}-${base}`.replace(/[^a-z0-9-]/g, '-');
+        const entry = { id, name: base, author: ref.repo.split('/')[0], repo: ref.repo, path: ref.path, ref: ref.ref, license: 'unknown', group: 'custom', category: 'Added from GitHub', description: `Added from ${a.url}`, recommendedFor: [], hasScripts: null, custom: true };
+        this.mutate((s) => {
+          s.skills.custom = (s.skills.custom || []).filter((e) => e.id !== id);
+          s.skills.custom.push(entry);
+        });
+        return this.action('skill-select', { id, agents: a.agents });
+      }
+      case 'skill-accept-suggestions': {
+        const ids = new Set(this.catalog().map((e) => e.id));
+        await Promise.all(this.skillSuggestions().filter((sg) => ids.has(sg.skill) && sg.agents.length).map((sg) => this.action('skill-select', { id: sg.skill, agents: sg.agents })));
+        return { ok: true };
+      }
       case 'approve-plan':
         need(st.status === 'plan_review', 'No plan is waiting for approval');
+        need(!(st.skills?.selected || []).some((x) => x.status === 'downloading'), 'Wait until the selected skills finish downloading.');
+        need(!(st.skills?.selected || []).some((x) => x.status === 'error'), 'A selected skill failed to download. Remove it or select it again in the Skills tab.');
         {
           const errors = this.validatePlan();
           need(!errors.length, `The plan has problems: ${errors.join('; ')}`);
@@ -1593,6 +1652,59 @@ export class Orchestrator extends EventEmitter {
         break;
     }
     return { ok: true };
+  }
+
+  // ---------- skills ----------
+  catalog() {
+    return [...readCatalog(), ...(this.state().skills?.custom || [])];
+  }
+
+  skillSuggestions() {
+    const s = this.store.readJSON('skill-suggestions.json', null);
+    const ids = new Set(this.roster().map((a) => a.id));
+    return (Array.isArray(s?.suggestions) ? s.suggestions : [])
+      .filter((x) => x && x.skill)
+      .map((x) => ({ skill: String(x.skill), agents: (Array.isArray(x.agents) ? x.agents : []).filter((id) => ids.has(id)), reason: String(x.reason || '').slice(0, 400) }));
+  }
+
+  cleanAgents(list) {
+    const ids = new Set([...this.roster().map((x) => x.id), 'cto']);
+    return [...new Set((Array.isArray(list) ? list : []).filter((id) => ids.has(id)))];
+  }
+
+  async downloadSkill(entry) {
+    this.event('skills', `Downloading ${entry.name} from ${entry.repo}`);
+    try {
+      const m = await this.skillLib.download(entry);
+      this.mutate((s) => {
+        const cur = s.skills.selected.find((x) => x.id === entry.id);
+        if (cur) Object.assign(cur, { status: 'ready', error: null, sha: m.sha, skillName: m.skillName, description: m.description, files: m.files.length, scripts: m.scripts, bytes: m.bytes, downloadedAt: m.downloadedAt });
+      });
+      this.event('skills', `${entry.name} is ready (pinned to ${m.sha.slice(0, 7)})`);
+    } catch (e) {
+      this.mutate((s) => {
+        const cur = s.skills.selected.find((x) => x.id === entry.id);
+        if (cur) Object.assign(cur, { status: 'error', error: e.message });
+      });
+      this.event('skills', `${entry.name} failed to download: ${e.message}`);
+    }
+  }
+
+  // Ready skills assigned to an agent, each packed as a one-skill plugin for --plugin-dir.
+  skillsFor(agentId) {
+    if (this.config().claude.disableSkills) return [];
+    const out = [];
+    for (const sk of this.state().skills?.selected || []) {
+      if (sk.status !== 'ready' || !sk.agents?.includes(agentId)) continue;
+      try {
+        const manifest = this.skillLib.readManifest(sk.id, sk.sha);
+        if (!manifest) throw new Error('it is missing from the cache');
+        out.push({ id: sk.id, name: sk.name, skillName: manifest.skillName, description: manifest.description, pack: this.skillLib.ensurePack(this.store, manifest) });
+      } catch (e) {
+        this.event('skills', `Skipped skill ${sk.id} for ${agentId}: ${e.message}`);
+      }
+    }
+    return out;
   }
 
   activeInfo() {

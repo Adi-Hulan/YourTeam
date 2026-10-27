@@ -76,6 +76,7 @@ export function snapshot(orch) {
     cto: { ...(orch.state().cto || { threads: [] }), logs: Object.fromEntries((orch.state().cto?.threads || []).map((t) => [t.id, orch.ctoLog(t.id)])) },
     app: { ...orch.app.info(), lines: undefined },
     hasRun: s.exists('run.json'),
+    skills: { catalog: orch.catalog(), selected: orch.state().skills?.selected || [], suggestions: orch.skillSuggestions() },
     hasSpec: s.exists('spec.md'),
     git: orch.gitOn() ? git.log(s.projectDir, 40) : null,
     demo: orch.demo,
@@ -173,6 +174,11 @@ export function startServer(orch, { port, host = '127.0.0.1' }) {
         return send(res, 200, { path: rel, content: orch.store.readText(rel, '') });
       }
       if (p === '/api/app') return send(res, 200, orch.app.info());
+      if (p === '/api/skill') {
+        const sk = (orch.state().skills?.selected || []).find((x) => x.id === url.searchParams.get('id'));
+        const pv = sk?.sha ? orch.skillLib.preview(sk.id, sk.sha) : null;
+        return pv ? send(res, 200, pv) : send(res, 404, { error: 'That skill is not downloaded' });
+      }
       if (p === '/api/review') {
         const id = url.searchParams.get('phase');
         const phase = orch.plan().phases.find((x) => x.id === id);

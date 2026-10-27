@@ -66,6 +66,12 @@ const tool = async (name, input, result = 'ok') => {
 const block = (obj) => '\n\n```yourteam\n' + JSON.stringify(obj, null, 2) + '\n```';
 
 const prompt = fs.readFileSync(0, 'utf8');
+// Record which skill packs each session was given, so the self-test can check per-agent loading.
+const pluginDirs = args.flatMap((x, i) => (x === '--plugin-dir' ? [args[i + 1]] : []));
+if (pluginDirs.length) {
+  const who = (prompt.match(/^Agent: ([\w-]+)/m) || [])[1] || null;
+  fs.appendFileSync(yt('.mock-plugin-dirs.log'), JSON.stringify({ agent: who, dirs: pluginDirs.map((d) => path.basename(d)) }) + '\n');
+}
 const kind = (prompt.match(/YOURTEAM_TASK_KIND: ([\w-]+)/) || [])[1] || 'chat';
 const agent = (prompt.match(/^Agent: ([\w-]+)/m) || [])[1];
 const phase = (prompt.match(/\| Phase: (\w+)/) || [])[1];
@@ -148,6 +154,7 @@ if (kind === 'interview' || (kind === 'chat' && arg('--resume'))) {
   write('.yourteam/contracts/api.md', '# API\n\n| Method | Path | Body | Response |\n|---|---|---|---|\n| GET | /todos | - | Todo[] |\n| POST | /todos | {title} | Todo |\n');
   write('.yourteam/decisions/001-stack.md', '# 001 Stack\n\nDecision: plain Node, no framework.\n');
   write('.yourteam/run.json', { command: 'node server.js', cwd: '.', url: 'http://localhost:4599' });
+  write('.yourteam/skill-suggestions.json', { suggestions: [{ skill: 'impeccable', agents: ['frontend'], reason: 'Keeps the todo UI polished and accessible instead of generic.' }, { skill: 'ponytail', agents: ['backend'], reason: 'The API is small; this keeps the backend from being over-engineered.' }] });
   for (const id of ['backend', 'frontend', 'qa']) write(`.yourteam/agents/${id}.md`, fs.readFileSync(path.join(TEMPLATES, `${id}.md`), 'utf8'));
   write('.yourteam/roster.json', {
     agents: [

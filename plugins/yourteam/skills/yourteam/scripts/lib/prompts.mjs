@@ -185,14 +185,16 @@ Types (every order also has a short "title"):
 - {"type": "spec-change", "title": "...", "text": "what changes in the spec; appended to its change log"}
 The customer reviews each order and clicks Apply; nothing happens until then. Omit the block when there is nothing to propose.`;
 
-const CTO_PLAN_REVIEW_RULES = `The plan is waiting for the customer's approval, and nothing is being built yet. Apply what the customer asks by editing the files directly: .yourteam/plan.json, roster.json, agents/<id>.md, architecture.md, conventions.md, contracts/, run.json. Keep plan.json and roster.json valid in the same format. The dashboard shows the customer a diff of your plan and team changes after each reply, so describe the change briefly instead of repeating the plan. Do not write application code. If a request is unclear or has a real trade-off, ask first.`;
+const CTO_PLAN_REVIEW_RULES = `The plan is waiting for the customer's approval, and nothing is being built yet. Apply what the customer asks by editing the files directly: .yourteam/plan.json, roster.json, agents/<id>.md, architecture.md, conventions.md, contracts/, run.json. Keep plan.json and roster.json valid in the same format. The dashboard shows the customer a diff of your plan and team changes after each reply, so describe the change briefly instead of repeating the plan. Do not write application code. If a request is unclear or has a real trade-off, ask first.
+Skills from the catalog are chosen by the customer in the Skills tab. You can recommend one (by its catalog id and the agent it fits), but you cannot add it yourself.`;
 
 const CTO_BUILD_RULES = `The build is under way or finished. Do not edit plan.json, roster.json or application code yourself; the orchestrator reverts direct plan edits made in this chat. You may read anything: the code, .yourteam/handoffs/, .yourteam/qa/, .yourteam/reports/, git history.
 When the customer reports a problem or asks for a change:
 1. Work out what is wrong and which agent owns it. Read the code or the handoffs when you are not sure.
 2. Explain in plain language what you will have the team do.
 3. Propose change orders. Prefer one focused order per problem, with concrete repro steps and acceptance criteria.
-If the request is ambiguous, ask a clarifying question instead of guessing. You can also just answer questions about the project.`;
+If the request is ambiguous, ask a clarifying question instead of guessing. You can also just answer questions about the project.
+Skills from the catalog are chosen by the customer in the Skills tab. You can recommend one (by its catalog id and the agent it fits), but you cannot add it yourself.`;
 
 export function ctoChatPrompt({ first, modeChanged, canEditPlan, status, text }) {
   const rules = `${canEditPlan ? CTO_PLAN_REVIEW_RULES : CTO_BUILD_RULES}\n\n${CHANGE_ORDER_FORMAT}`;
@@ -277,7 +279,23 @@ plan.json format:
   ]
 }`;
 
-export function planPrompt({ existingCode, lessons, feedback, errors, mode }) {
+export function skillsNote(skills) {
+  if (!skills?.length) return '';
+  const lines = skills.map((s) => `- ${s.name} (yt-${s.id}:${s.skillName}): ${String(s.description).replace(/\s+/g, ' ').slice(0, 300)}`);
+  return `\n\n# Skills loaded for you\nThe customer chose these skills for your role. They are loaded in this session as plugin skills named yt-<id>:<skill>. Use them whenever your task touches their area, and read their reference files when a skill tells you to:\n${lines.join('\n')}\nIf a skill conflicts with .yourteam/conventions.md, the contracts or the spec, the project documents win.`;
+}
+
+function skillCatalogText(catalog) {
+  if (!catalog?.length) return '';
+  const lines = catalog.map((s) => `- ${s.id}: ${s.name} [${s.group}] ${s.description}${s.recommendedFor?.length ? ` (fits: ${s.recommendedFor.join(', ')})` : ''}`);
+  return `\n\nSkill catalog. The customer can attach these third-party skills to agents; a skill is downloaded only if the customer agrees:
+${lines.join('\n')}
+Write .yourteam/skill-suggestions.json with the skills you recommend for this project, or an empty list if none fit:
+{"suggestions": [{"skill": "<catalog id>", "agents": ["<roster agent id>"], "reason": "one sentence on why it helps this project"}]}
+Suggest a skill only when it clearly helps this product. At most 3 skills per agent, and at most one skill from the "design" group per agent, because overlapping design skills give conflicting direction. The plan must work without any skill, since the customer may decline.`;
+}
+
+export function planPrompt({ existingCode, lessons, feedback, errors, mode, skillCatalog }) {
   const scan = existingCode
     ? `This project already has code. Before planning, explore it and write .yourteam/project-map.md: stack, structure, entry points, how to run and test it, conventions you observed, and risky areas. Plan changes that fit the existing code instead of rewriting it.`
     : 'This is a new project with no existing code.';
@@ -295,7 +313,7 @@ ${templateCatalog()}
 
 ${PLAN_FILES}
 
-${PLAN_RULES}${learned}${fb}${fix}
+${PLAN_RULES}${skillCatalogText(skillCatalog)}${learned}${fb}${fix}
 
 Finish by replying with a short summary: the stack, the team, and the phases.`;
 }

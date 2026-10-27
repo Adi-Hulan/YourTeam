@@ -26,6 +26,8 @@ Read this when you need exact file formats, the state machine, or config keys.
 | `reports/<same>.json` | each session | Machine-readable result (status, messages, questions) |
 | `qa/<phase>-r<n>.md/.json` | QA | QA report per round |
 | `run.json` | CTO, devs | How to start the product: `{"command", "cwd", "url", "env"}`; used by Run app |
+| `skill-suggestions.json` | CTO | Skills the CTO recommends: `{"suggestions":[{"skill","agents","reason"}]}` |
+| `skillpacks/<id>/` | orchestrator | A selected skill packed as a one-skill plugin, passed to sessions with `--plugin-dir` |
 | `retro.md` | CTO | Retrospective; its `## Lessons` section is appended to `~/.yourteam/lessons.md` |
 | `state.json` | orchestrator | Status, phase and step states, totals, change requests |
 | `sessions.json` | orchestrator | Every session: agent, kind, phase, tokens, cost, context peak, status |
@@ -142,12 +144,21 @@ The orchestrator validates both files after every CTO planning session. Validati
 | `retro` | true | Retrospective at the end |
 | `autoResume` | false | Continue automatically after an orchestrator restart |
 
-## 7. Skill layout
+## 7. Skills
+
+- **Catalog:** `catalog/skills.json` in the skill folder lists references only: `{ id, name, author, repo, path, ref, license, group, category, description, recommendedFor, hasScripts }`. Skills added from a URL are stored in state.json `skills.custom`.
+- **Selection:** state.json `skills.selected` holds `{ id, agents, status: downloading | ready | error, sha, skillName, files, scripts, bytes }`. The plan cannot be approved while a selected skill is downloading or failed.
+- **Download:** on selection, the commit of `ref` is resolved through the GitHub API (no sign-in; 60 requests an hour), the files under `path` are fetched from raw.githubusercontent.com at that commit, and cached in `~/.yourteam/skills/<id>/<sha>/` with a `.yourteam-skill.json` manifest. Limits: 400 files, 15 MB.
+- **Loading:** for each session, the agent's ready skills are copied to `.yourteam/skillpacks/<id>/` (once per commit) and passed with `--plugin-dir`, so they appear as `yt-<id>:<skill>`. The system prompt lists them and says project documents win on conflicts. Sessions record `skills` in sessions.json. "Disable skills in agent sessions" in Settings turns all of this off.
+- **Not yet supported:** skills that need an MCP server (for example REA).
+
+## 8. Skill layout
 
 ```
 yourteam/
   SKILL.md
   references/protocol.md          this file
+  catalog/skills.json             skill catalog (references to GitHub, nothing downloaded)
   templates/agents/*.md           role templates the CTO hires from
   templates/docs/spec.md, handoff.md
   scripts/yourteam.mjs            CLI: start | status | action | doctor

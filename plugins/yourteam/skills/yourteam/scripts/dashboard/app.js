@@ -113,6 +113,10 @@
     refresh: '<path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/>',
     file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>',
     chevron: '<path d="m9 18 6-6-6-6"/>',
+    skills: '<path d="M14.5 4h-5L7 7H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1h-3z"/><circle cx="12" cy="13" r="3"/>',
+    link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+    eye: '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+    alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/>',
   };
   const ic = (name, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24">${P[name] || ''}</svg>`;
 
@@ -415,7 +419,7 @@
   // ---------- routing & render ----------
   const NAV = [
     [['overview', 'overview', 'Overview'], ['inbox', 'inbox', 'Inbox']],
-    [['interview', 'chat', 'Interview'], ['cto', 'cto', 'CTO'], ['plan', 'plan', 'Plan'], ['review', 'review', 'Review'], ['app', 'play', 'Run app']],
+    [['interview', 'chat', 'Interview'], ['cto', 'cto', 'CTO'], ['plan', 'plan', 'Plan'], ['skills', 'skills', 'Skills'], ['review', 'review', 'Review'], ['app', 'play', 'Run app']],
     [['agents', 'users', 'Agents'], ['live', 'activity', 'Live sessions'], ['messages', 'messages', 'Agent messages']],
     [['usage', 'usage', 'Usage'], ['qa', 'qa', 'QA reports'], ['timeline', 'timeline', 'Timeline']],
     [['docs', 'docs', 'Docs'], ['settings', 'settings', 'Settings']],
@@ -438,7 +442,7 @@
     const main = $('#main');
     const chat = main.querySelector('.chat-scroll');
     const stickChat = !chat || chat.scrollHeight - chat.scrollTop - chat.clientHeight < 60;
-    const views = { overview, inbox, interview, cto, plan, review, app: appView, agents, live: liveView, messages, usage, qa, docs, timeline, settings };
+    const views = { overview, inbox, interview, cto, plan, skills: skillsView, review, app: appView, agents, live: liveView, messages, usage, qa, docs, timeline, settings };
     if (!(ui.editing && ui.view === 'docs')) morph(main, (views[ui.view] || overview)());
     const chat2 = main.querySelector('.chat-scroll');
     if (chat2 && (stickChat || chat2 !== chat)) chat2.scrollTop = chat2.scrollHeight;
@@ -826,7 +830,7 @@
     const sel = ph.find((p) => p.id === ui.phase) || ph.find((p) => p.id === S.state.currentPhase) || ph[0];
     const allAuto = ph.every((p) => autoRun(p.id));
     const noneAuto = ph.every((p) => !autoRun(p.id));
-    const review = st === 'plan_review' ? `<div class="banner amber"><div class="grow"><b>Review the plan and the team.</b> Want changes? Chat with the CTO; it edits the plan and shows you a diff. Approve when you're happy.</div><a class="btn sm" href="#cto">${ic('cto')}Discuss with CTO</a><button class="btn primary sm" data-act="approve-plan">Approve plan</button></div>` : '';
+    const review = st === 'plan_review' ? `<div class="banner amber"><div class="grow"><b>Review the plan and the team.</b> Want changes? Chat with the CTO; it edits the plan and shows you a diff. ${pendingSuggestions().length ? `The CTO also suggests ${pendingSuggestions().length} skill${pendingSuggestions().length > 1 ? 's' : ''} for the agents. ` : ''}Approve when you're happy.</div>${pendingSuggestions().length ? `<a class="btn sm" href="#skills">${ic('skills')}Review skills</a>` : ''}<a class="btn sm" href="#cto">${ic('cto')}Discuss with CTO</a><button class="btn primary sm" data-act="approve-plan">Approve plan</button></div>` : '';
     return view(
       'plan',
       `${review}${pageHead('Plan', `${esc(S.plan.mode || '')} · ${ph.length} phases · ${esc(S.plan.summary || '')}`, `<span class="small muted">When a phase is ready</span><div class="seg"><button class="${allAuto ? 'on' : ''}" data-autorun-all="1">Auto-run all</button><button class="${noneAuto ? 'on' : ''}" data-autorun-all="0">Ask before each</button></div>`)}
@@ -940,6 +944,124 @@
         }
       });
   }
+  // ---------- skills ----------
+  const ownerOf = (repo) => String(repo || '').split('/')[0];
+  const avatar = (repo, size = 36) => `<img src="https://github.com/${esc(ownerOf(repo))}.png?size=${size * 2}" alt="" width="${size}" height="${size}" style="border-radius:8px;flex:none;background:var(--bg-3)" loading="lazy" onerror="this.style.visibility='hidden'">`;
+  const skillCatalog = () => S.skills?.catalog || [];
+  const selectedSkills = () => S.skills?.selected || [];
+  const skillName = (id) => skillCatalog().find((e) => e.id === id)?.name || selectedSkills().find((e) => e.id === id)?.name || id;
+  const pendingSuggestions = () => (S.skills?.suggestions || []).filter((sg) => !selectedSkills().some((x) => x.id === sg.skill) && skillCatalog().some((e) => e.id === sg.skill));
+  const devAgents = () => S.roster;
+  function agentSkillChips(agentId) {
+    const list = selectedSkills().filter((x) => x.agents?.includes(agentId));
+    if (!list.length) return `<a class="small muted" href="#skills">None · add</a>`;
+    return `<span class="row" style="gap:4px">${list.map((x) => `<a class="badge ${x.status === 'ready' ? '' : x.status === 'error' ? 'red' : 'blue'}" href="#skills" style="text-decoration:none">${esc(x.name)}</a>`).join('')}</span>`;
+  }
+  function skillWarnings() {
+    const out = [];
+    for (const a of devAgents()) {
+      const mine = selectedSkills().filter((x) => x.agents?.includes(a.id));
+      const design = mine.filter((x) => skillCatalog().find((e) => e.id === x.id)?.group === 'design');
+      if (mine.length > 3) out.push(`${a.name || a.id} has ${mine.length} skills. More than 3 per agent costs tokens in every session and gives mixed direction.`);
+      if (design.length > 1) out.push(`${a.name || a.id} has ${design.length} design skills (${design.map((x) => x.name).join(', ')}). They may give conflicting direction; one is usually better.`);
+    }
+    return out;
+  }
+  function agentPicker(key, chosen) {
+    if (!devAgents().length) return '<span class="xs muted">Agents appear once the CTO hires the team.</span>';
+    return `<span class="row" style="gap:6px">${devAgents().map((a) => `<button class="opt ${chosen.includes(a.id) ? 'on' : ''}" style="height:26px;font-size:12.5px;padding:0 10px" data-pick="${esc(key)}" data-agent="${esc(a.id)}">${esc(a.name || a.id)}</button>`).join('')}</span>`;
+  }
+  // Agent choices follow the catalog's recommendation until the user changes them.
+  function fallbackFor(key) {
+    const roster = devAgents().map((a) => a.id);
+    return (skillCatalog().find((e) => e.id === key)?.recommendedFor || []).filter((id) => roster.includes(id));
+  }
+  function pickFor(key) {
+    ui.skillPick ||= {};
+    return ui.skillPick[key] || fallbackFor(key);
+  }
+  function skillsView() {
+    const sel = selectedSkills();
+    const roster = devAgents().map((a) => a.id);
+    const sugg = pendingSuggestions();
+    const warnings = skillWarnings();
+    const statusLine = (x) =>
+      x.status === 'ready'
+        ? `${stIcon('done')}<span class="small">Ready · pinned to <span class="mono">${esc((x.sha || '').slice(0, 7))}</span> · ${x.files || 0} file${x.files === 1 ? '' : 's'}</span>`
+        : x.status === 'error'
+          ? `${stIcon('error')}<span class="small" style="color:var(--red)">${esc(x.error || 'Download failed')}</span>`
+          : `${stIcon('running')}<span class="small muted">Downloading from GitHub…</span>`;
+    const selectedHtml = sel.length
+      ? `<div class="grid g2">${sel
+          .map((x) => {
+            const e = skillCatalog().find((c) => c.id === x.id) || {};
+            const scripts = x.scripts?.length || 0;
+            return `<div class="card" data-key="sk-${esc(x.id)}">
+              <div class="row nowrap" style="gap:12px;align-items:flex-start">${avatar(x.repo)}<div class="grow"><div class="row"><b style="font-weight:500">${esc(x.name)}</b>${e.license ? `<span class="badge">${esc(e.license)}</span>` : ''}${scripts ? `<span class="badge amber" title="${esc(x.scripts.join(', '))}">${ic('alert')}${scripts} script${scripts > 1 ? 's' : ''}</span>` : ''}</div>
+                <a class="xs muted mono" href="https://github.com/${esc(x.repo)}/tree/${esc(x.sha || 'HEAD')}/${esc(x.path || '')}" target="_blank" rel="noopener">${esc(x.repo)}${x.path ? '/' + esc(x.path) : ''}</a></div></div>
+              <div class="row nowrap" style="margin:12px 0 10px;gap:8px">${statusLine(x)}</div>
+              <div class="label" style="margin-bottom:6px">Used by</div>${roster.length ? `<span class="row" style="gap:6px">${devAgents().map((a) => `<button class="opt ${x.agents?.includes(a.id) ? 'on' : ''}" style="height:26px;font-size:12.5px;padding:0 10px" data-skill-agent="${esc(x.id)}" data-agent="${esc(a.id)}">${esc(a.name || a.id)}</button>`).join('')}</span>` : ''}
+              <div class="row" style="margin-top:14px">${x.status === 'ready' ? `<button class="btn sm" data-skill-preview="${esc(x.id)}">${ic('eye')}Preview</button>` : ''}${x.status === 'error' ? `<button class="btn sm" data-skill-retry="${esc(x.id)}">${ic('refresh')}Retry</button>` : ''}<button class="btn ghost sm danger" data-skill-remove="${esc(x.id)}">Remove</button></div>
+            </div>`;
+          })
+          .join('')}</div>`
+      : `<div class="card muted small" style="text-align:center;padding:24px">No skills yet. The agents work fine without them; add one below if you want a specialist's guidance built in.</div>`;
+    const suggHtml = sugg.length
+      ? `<div class="section-title" style="margin-top:28px">Suggested by the CTO <button class="btn primary sm" data-act="skill-accept-suggestions">${ic('plus')}Add all</button></div><div class="col" style="gap:10px">${sugg
+          .map((sg) => {
+            const e = skillCatalog().find((c) => c.id === sg.skill);
+            return `<div class="card tight" data-key="sg-${esc(sg.skill)}"><div class="row nowrap" style="gap:12px">${avatar(e.repo, 32)}<div class="grow"><div class="row"><b style="font-weight:500">${esc(e.name)}</b><span class="xs muted">for ${sg.agents.map((id) => esc(agentNameSafe(id))).join(', ') || 'no agent'}</span></div><div class="small muted">${esc(sg.reason)}</div></div><button class="btn sm" data-skill-add="${esc(sg.skill)}" data-agents="${esc(sg.agents.join(','))}" ${sg.agents.length ? '' : 'disabled'}>${ic('plus')}Add</button></div></div>`;
+          })
+          .join('')}</div>`
+      : '';
+    const catHtml = skillCatalog()
+      .filter((e) => !e.custom)
+      .map((e) => {
+        const added = sel.some((x) => x.id === e.id);
+        const chosen = pickFor(e.id);
+        return `<div class="card" data-key="cat-${esc(e.id)}" style="display:flex;flex-direction:column">
+          <div class="row nowrap" style="gap:12px;align-items:flex-start">${avatar(e.repo, 40)}<div class="grow"><b style="font-weight:500">${esc(e.name)}</b><div class="xs muted">${esc(e.author || ownerOf(e.repo))} · ${esc(e.category || '')}</div></div>${added ? `<span class="badge green">${ic('check')}Added</span>` : ''}</div>
+          <p class="small muted" style="margin:12px 0;flex:1">${esc(e.description)}</p>
+          <div class="row" style="gap:6px;margin-bottom:12px"><span class="badge">${esc(e.license)}</span>${e.group === 'design' ? '<span class="badge purple">Design</span>' : ''}${e.hasScripts ? `<span class="badge amber">${ic('alert')}Includes scripts</span>` : ''}<a class="badge" href="https://github.com/${esc(e.repo)}/tree/${esc(e.ref || 'main')}/${esc(e.path)}" target="_blank" rel="noopener" style="text-decoration:none">${ic('link')}GitHub</a></div>
+          ${added ? '' : `<div class="label" style="margin-bottom:6px">Give it to</div>${agentPicker(e.id, chosen)}<div class="row" style="margin-top:12px"><button class="btn primary sm" data-skill-add="${esc(e.id)}" ${chosen.length ? '' : 'disabled'}>${ic('plus')}Add skill</button></div>`}
+        </div>`;
+      })
+      .join('');
+    const urlPick = pickFor('__url');
+    return view(
+      'skills',
+      `${pageHead('Skills', 'Give agents expert skills from GitHub. Nothing is downloaded until you add a skill, and each one is pinned to the exact version you added. Changes apply from the next session.')}
+      ${!roster.length ? `<div class="banner"><div class="grow small">Skills are given to agents, and the team is hired when the CTO writes the plan. You can browse the catalog now and add skills once the plan is ready.</div></div>` : ''}
+      ${warnings.map((w) => `<div class="banner amber"><span>${ic('alert')}</span><div class="grow small">${esc(w)}</div></div>`).join('')}
+      <div class="section-title">Selected for this project</div>${selectedHtml}
+      ${suggHtml}
+      <div class="section-title" style="margin-top:28px">Catalog</div><div class="grid g3">${catHtml}</div>
+      <div class="card" style="margin-top:20px"><h3 style="margin-bottom:4px">Add a skill from GitHub</h3><p class="small muted" style="margin:0 0 12px">Paste a link to a folder that contains a SKILL.md, e.g. https://github.com/owner/repo/tree/main/skills/name. Only add skills from sources you trust: agents follow them unattended.</p>
+        <div class="row nowrap"><input type="text" id="skill-url" placeholder="https://github.com/…" style="flex:1"><button class="btn primary" data-skill-url ${roster.length ? '' : 'disabled'}>Add</button></div>
+        <div style="margin-top:10px">${agentPicker('__url', urlPick)}</div></div>`
+    );
+  }
+  const agentNameSafe = (id) => (S.roster.find((a) => a.id === id)?.name || id);
+
+  async function skillPreview(id) {
+    const d = $('#dialog');
+    $('#dialog-form').innerHTML = '<div class="col"><div class="skeleton" style="width:40%"></div><div class="skeleton"></div></div>';
+    d.style.maxWidth = '820px';
+    d.onclose = () => (d.style.maxWidth = '');
+    d.showModal();
+    try {
+      const r = await fetch(`/api/skill?id=${encodeURIComponent(id)}`);
+      const p = await r.json();
+      if (!r.ok) throw new Error(p.error);
+      $('#dialog-form').innerHTML = `<div class="row nowrap" style="justify-content:space-between;gap:12px"><div class="row nowrap" style="gap:12px">${avatar(p.repo)}<div><h2>${esc(skillName(id))}</h2><div class="xs muted mono">${esc(p.repo)}/${esc(p.path)} @ ${esc(p.sha.slice(0, 7))}</div></div></div><button class="btn ghost icon" value="close">${ic('x')}</button></div>
+        ${p.scripts.length ? `<div class="banner amber" style="margin:16px 0 0"><span>${ic('alert')}</span><div class="grow small"><b>This skill includes ${p.scripts.length} script${p.scripts.length > 1 ? 's' : ''}</b> that agents may run: ${p.scripts.map(esc).join(', ')}</div></div>` : ''}
+        <details style="margin:14px 0"><summary class="small">${p.files.length} file${p.files.length > 1 ? 's' : ''} · ${Math.round(p.bytes / 1024)} KB</summary><div class="mono xs muted" style="margin-top:8px;max-height:140px;overflow:auto">${p.files.map(esc).join('<br>')}</div></details>
+        <div class="card flat" style="max-height:55vh;overflow:auto">${md(p.skillMd.replace(/^---[\s\S]*?---\s*/, ''))}</div>`;
+    } catch (e) {
+      $('#dialog-form').innerHTML = `<p style="color:var(--red)">${esc(e.message)}</p><div class="row" style="justify-content:flex-end"><button class="btn" value="close">Close</button></div>`;
+    }
+  }
+
   function appView() {
     const a = S.app || {};
     const running = a.status === 'running';
@@ -980,7 +1102,7 @@
             <div class="row nowrap" style="justify-content:space-between"><div class="row nowrap" style="gap:10px"><span class="av ${a.id === 'ceo' ? 'ceo' : a.id === 'cto' ? 'cto' : ''}" style="width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:700;border:1px solid var(--border-2);${a.id === 'ceo' ? 'background:linear-gradient(135deg,#ff9a3c,#ff4d8d);color:#fff;border:0' : a.id === 'cto' ? 'background:linear-gradient(135deg,#3291ff,#7c3aed);color:#fff;border:0' : ''}">${esc(a.id.slice(0, 3).toUpperCase())}</span><div><b style="font-weight:500">${esc(a.name || a.id)}</b><div class="xs faint mono">${esc(a.id)}</div></div></div>${working ? `<span class="badge blue"><span class="dot blue pulse"></span>working</span>` : '<span class="badge">idle</span>'}</div>
             <p class="small muted" style="margin:10px 0 14px;min-height:38px">${esc(desc)}</p>
             <dl class="kv"><dt>Model</dt><dd><select data-model="${esc(a.id)}" style="height:28px;padding:0 8px">${[...new Set([model, ...models])].map((m) => `<option ${m === model ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></dd>
-            <dt>Sessions</dt><dd>${s.n}</dd><dt>Cost</dt><dd>${money(s.cost)}</dd><dt>Tokens</dt><dd>${tok(s.tokens)}</dd><dt>Peak context</dt><dd>${ctxBar(s.peak, 100, 90)}</dd></dl>
+            ${a.core ? '' : `<dt>Skills</dt><dd>${agentSkillChips(a.id)}</dd>`}<dt>Sessions</dt><dd>${s.n}</dd><dt>Cost</dt><dd>${money(s.cost)}</dd><dt>Tokens</dt><dd>${tok(s.tokens)}</dd><dt>Peak context</dt><dd>${ctxBar(s.peak, 100, 90)}</dd></dl>
             <div class="row" style="margin-top:14px">${!a.core || a.id === 'cto' ? `<a class="btn sm" href="#docs" data-open-doc="agents/${esc(a.id)}.md">Role file</a>` : ''}${!a.core ? `<button class="btn ghost sm" data-msg-to="${esc(a.id)}">Message</button>` : ''}${a.id === 'cto' ? `<a class="btn ghost sm" href="#cto">Chat</a>` : ''}${a.id === 'ceo' ? `<a class="btn ghost sm" href="#interview">Interview</a>` : ''}</div>
           </div>`;
         })
@@ -1024,7 +1146,7 @@
     const cached = sel && Array.isArray(logCache[sel.id]) ? logCache[sel.id] : null;
     const header = sel
       ? `<div class="row nowrap" style="justify-content:space-between;gap:12px"><div class="row nowrap" style="gap:10px;min-width:0">${stIcon(sel.status === 'running' ? 'running' : sel.status === 'done' ? 'done' : sel.status === 'failed' ? 'error' : 'waiting')}<b style="font-weight:500">${esc(agentName(sel.agent))}</b><span class="muted small">${esc(sel.kind)}${sel.phase ? ' · ' + esc(sel.phase) : ''} · ${esc(sel.model || '')}</span></div><span class="mono xs faint">${esc(sel.id.slice(0, 8))}</span></div>
-        <div class="row small muted" style="margin:8px 0;gap:14px">${ctxBar(sel.contextTokens, sel.contextWindow, 120)}<span>Peak ${pct(sel.peakContextTokens, sel.contextWindow)}%</span><span>${sel.toolCalls || 0} tools</span><span>${sel.turns || 0} turns</span><span>${money(sel.costUsd)}</span><span>${dur(sel.durationMs || (sel.status === 'running' ? Date.now() - Date.parse(sel.startedAt) : 0))}</span></div>
+        <div class="row small muted" style="margin:8px 0;gap:14px">${ctxBar(sel.contextTokens, sel.contextWindow, 120)}<span>Peak ${pct(sel.peakContextTokens, sel.contextWindow)}%</span>${sel.skills?.length ? `<span>${ic('skills')} ${sel.skills.map((id) => esc(skillName(id))).join(', ')}</span>` : ''}<span>${sel.toolCalls || 0} tools</span><span>${sel.turns || 0} turns</span><span>${money(sel.costUsd)}</span><span>${dur(sel.durationMs || (sel.status === 'running' ? Date.now() - Date.parse(sel.startedAt) : 0))}</span></div>
         ${sel.summary ? `<div class="small" style="margin-bottom:8px"><b style="font-weight:500">Report (${esc(sel.reportStatus)}):</b> ${esc(sel.summary)}</div>` : ''}
         ${sel.error ? `<div class="small" style="color:var(--red);white-space:pre-wrap;margin-bottom:8px">${esc(sel.error.slice(0, 600))}</div>` : ''}
         <div class="row" style="margin-bottom:10px">${sel.handoffPath ? `<a class="btn ghost xs" href="#docs" data-open-doc="${esc(sel.handoffPath.replace(/^\.yourteam\//, ''))}">Handoff</a>` : ''}${sel.reportPath ? `<a class="btn ghost xs" href="#docs" data-open-doc="${esc(sel.reportPath.replace(/^\.yourteam\//, ''))}">Report</a>` : ''}</div>`
@@ -1543,6 +1665,44 @@
     }
     if (d.ctoRef) return ctoRef(d.ctoRef, d.problem === '1');
     if (d.applyCo) return act('apply-change-order', { id: d.applyCo }, 'Change order applied');
+    if (d.pick) {
+      ui.skillPick ||= {};
+      const list = (ui.skillPick[d.pick] ||= [...pickFor(d.pick)]);
+      const i = list.indexOf(d.agent);
+      if (i >= 0) list.splice(i, 1);
+      else list.push(d.agent);
+      return render();
+    }
+    if (d.skillAdd) {
+      const agents = d.agents !== undefined ? d.agents.split(',').filter(Boolean) : pickFor(d.skillAdd);
+      return act('skill-select', { id: d.skillAdd, agents }, `Adding ${skillName(d.skillAdd)}…`);
+    }
+    if (d.skillAgent) {
+      const x = selectedSkills().find((s) => s.id === d.skillAgent);
+      const cur = new Set(x?.agents || []);
+      if (cur.has(d.agent)) cur.delete(d.agent);
+      else cur.add(d.agent);
+      if (!cur.size) return toast('A skill needs at least one agent. Use Remove to drop it.', true);
+      return act('skill-agents', { id: d.skillAgent, agents: [...cur] });
+    }
+    if (d.skillRemove) {
+      if (await confirmDialog(`Remove ${skillName(d.skillRemove)}?`, 'Agents stop loading it from their next session. The downloaded copy stays cached, so adding it back is quick.', 'Remove', true)) await act('skill-remove', { id: d.skillRemove }, 'Skill removed');
+      return;
+    }
+    if (d.skillRetry) {
+      const x = selectedSkills().find((s) => s.id === d.skillRetry);
+      return act('skill-select', { id: d.skillRetry, agents: x?.agents || [] }, 'Retrying download');
+    }
+    if (d.skillPreview) return skillPreview(d.skillPreview);
+    if (d.skillUrl !== undefined) {
+      const el = $('#skill-url');
+      const url = el.value.trim();
+      if (!url) return;
+      const agents = pickFor('__url');
+      if (!agents.length) return toast('Pick at least one agent for this skill.', true);
+      if (await act('skill-add-url', { url, agents }, 'Adding skill…')) el.value = '';
+      return;
+    }
     if (d.rejectCo) return act('reject-change-order', { id: d.rejectCo });
     if (d.msgTo) {
       go('messages');

@@ -11,12 +11,39 @@ import assert from 'node:assert/strict';
 import { Store } from '../lib/store.mjs';
 import { Orchestrator } from '../lib/orchestrator.mjs';
 import * as git from '../lib/git.mjs';
+import { SkillLibrary, readCatalog } from '../lib/skills.mjs';
 
 process.env.YOURTEAM_MOCK_DELAY = process.env.YOURTEAM_MOCK_DELAY || '0';
 const dir = process.argv[2] || fs.mkdtempSync(path.join(os.tmpdir(), 'yourteam-selftest-'));
 const store = new Store(dir);
 const orch = new Orchestrator(store, { demo: true });
 orch.init();
+
+// A fake GitHub so skill downloads are tested without the network.
+const FAKE_SHA = 'f00dfeed'.repeat(5);
+const fakeRepos = {
+  ...Object.fromEntries(readCatalog().map((e) => [e.repo, [`${e.path}/SKILL.md`, ...(e.hasScripts ? [`${e.path}/scripts/inspect.mjs`] : [])]])),
+  'acme/one-skill': ['skill/SKILL.md', 'skill/notes.md'],
+};
+const json = (v) => ({ ok: true, status: 200, json: async () => v });
+orch.skillLib = new SkillLibrary({
+  cacheDir: path.join(dir, '.skillcache'),
+  fetchImpl: async (url) => {
+    let m = url.match(/api\.github\.com\/repos\/([^/]+\/[^/]+)(\/.*)?$/);
+    if (m) {
+      const files = fakeRepos[m[1]];
+      if (!files) return { ok: false, status: 404 };
+      if (!m[2]) return json({ default_branch: 'main' });
+      if (m[2].startsWith('/commits/')) return json({ sha: FAKE_SHA });
+      return json({ sha: FAKE_SHA, truncated: false, tree: files.map((p) => ({ type: 'blob', path: p, size: 100 })) });
+    }
+    m = url.match(/raw\.githubusercontent\.com\/[^/]+\/[^/]+\/[^/]+\/(.*)$/);
+    const file = decodeURIComponent(m[1]);
+    const name = file.split('/').at(-2);
+    const body = file.endsWith('SKILL.md') ? `---\nname: ${name}\ndescription: Fake ${name} skill for the self-test.\n---\nFollow ${name}.\n` : '// fake';
+    return { ok: true, status: 200, arrayBuffer: async () => new TextEncoder().encode(body).buffer };
+  },
+});
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function waitFor(pred, label, ms = 30000) {
@@ -64,6 +91,20 @@ try {
   assert.ok(!reply.planErrors, 'edited plan is valid');
   step(`CTO chat changed the plan: ${reply.planChanges.map((c) => `${c.op} ${c.text}`).join('; ')}`);
 
+  // Skills: the CTO suggested two; the customer adds them, plus one from a GitHub URL.
+  const sugg = orch.skillSuggestions();
+  assert.deepEqual(sugg.map((x) => `${x.skill}:${x.agents}`), ['impeccable:frontend', 'ponytail:backend']);
+  await orch.action('skill-accept-suggestions');
+  await orch.action('skill-add-url', { url: 'https://github.com/acme/one-skill', agents: ['qa'] });
+  await waitFor((s) => s.skills.selected.length === 3 && s.skills.selected.every((x) => x.status === 'ready'), 'skills downloaded');
+  const imp = orch.state().skills.selected.find((x) => x.id === 'impeccable');
+  assert.equal(imp.sha, FAKE_SHA, 'skill pinned to the commit');
+  assert.deepEqual(imp.scripts, ['scripts/inspect.mjs'], 'scripts are flagged');
+  await assert.rejects(orch.action('skill-add-url', { url: 'https://example.com/x', agents: ['qa'] }), /github\.com/);
+  await orch.action('skill-remove', { id: 'gh-one-skill' });
+  assert.equal(orch.state().skills.selected.length, 2);
+  step('skills: CTO suggestions added, URL skill added and removed, versions pinned, scripts flagged');
+
   // Auto-run off for P2: the team stops before it.
   await orch.action('set-autorun', { phase: 'P2', value: false });
   await orch.action('approve-plan');
@@ -95,6 +136,18 @@ try {
   const files = git.diffNumstat(dir, 'yourteam/P2-start', 'yourteam/P2-done');
   assert.ok(files.length > 0, 'phase review can list files changed in P2');
   step(`P2 ran ${kinds.join(' -> ')}; P3 auto-ran; ${files.length} files changed in P2`);
+
+  // Each agent's sessions loaded only that agent's skills.
+  const loads = store.readText('.mock-plugin-dirs.log').trim().split('\n').map((l) => JSON.parse(l));
+  const byAgent = {};
+  for (const l of loads) (byAgent[l.agent] ||= new Set()).add(l.dirs.join(','));
+  assert.deepEqual([...byAgent.frontend], ['impeccable']);
+  assert.deepEqual([...byAgent.backend], ['ponytail']);
+  assert.ok(!byAgent.qa, 'QA got no skills after the URL skill was removed');
+  assert.ok(store.exists('skillpacks/impeccable/.claude-plugin/plugin.json'), 'skill packed as a plugin');
+  assert.ok(store.exists('skillpacks/impeccable/skills/impeccable/SKILL.md'));
+  assert.ok(orch.sessions().filter((s) => s.agent === 'frontend').every((s) => s.skills?.includes('impeccable')), 'sessions record their skills');
+  step('per-agent skill loading: frontend → impeccable, backend → ponytail, QA → none');
 
   // CTO chat after the build proposes a change order instead of editing the plan.
   await orch.action('cto-chat', { text: 'I tested it: empty titles are accepted' });

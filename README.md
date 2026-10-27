@@ -18,6 +18,7 @@ Each step of each phase runs as its **own fresh `claude -p` session**, so no age
   - Roll a phase back using git checkpoints.
 - **Full visibility:** an inbox for agent questions and approvals, live session logs, the agent message board, and token, cost and context-window usage per agent, phase and session.
 - **Safe defaults:** budget caps, per-agent tool permissions, retry limits, and crash-safe state on disk.
+- **Skills from the community:** give agents expert skills such as Emil Kowalski's design engineering, Ponytail, Impeccable or Taste Skill. The CTO suggests which agent should get which skill. Nothing is downloaded until you add it, each skill is pinned to the exact version you added, and each agent loads only its own skills.
 - **Learns over time:** at the end, the CTO writes a retrospective, and its lessons feed into future plans.
 
 ## Requirements
@@ -98,6 +99,24 @@ Everything lives in `<project>/.yourteam/`, so a run survives restarts:
 
 Full file formats, the state machine and every setting: [`references/protocol.md`](plugins/yourteam/skills/yourteam/references/protocol.md).
 
+## Skills
+
+The **Skills** tab lists a small catalog of popular skills. The catalog holds only links, so no third-party code ships with YourTeam.
+
+| Skill | Repository | Good for |
+|---|---|---|
+| Emil Kowalski: Design Engineering | [emilkowalski/skills](https://github.com/emilkowalski/skills) | UI polish and animation decisions |
+| Ponytail | [DietrichGebert/ponytail](https://github.com/DietrichGebert/ponytail) | The smallest change that fully solves the task |
+| Impeccable | [pbakaus/impeccable](https://github.com/pbakaus/impeccable) | Frontend design system and design audits |
+| Taste Skill | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) | Art direction for landing pages and marketing sites |
+
+- **The CTO suggests:** while planning, the CTO recommends skills for specific agents. You accept, change or skip them.
+- **You add:** pick a catalog skill and the agents that should use it, or paste a link to any GitHub folder that contains a `SKILL.md`.
+- **Pinned and previewed:** the skill is downloaded at that moment and pinned to the exact commit. Preview its `SKILL.md` and see which scripts it contains before the team uses it.
+- **Only where needed:** each agent loads only its own skills, which keeps token use down. Keep it to one design skill per agent; the dashboard warns you when skills may conflict.
+
+Skills run inside agents that work unattended with shell access, so only add skills from sources you trust. Want a skill in the catalog? Open a pull request that adds it to [`catalog/skills.json`](plugins/yourteam/skills/yourteam/catalog/skills.json).
+
 ## Controlling it from Claude Code
 
 ```bash
@@ -132,10 +151,11 @@ plugins/yourteam/
   skills/yourteam/
     SKILL.md                           instructions Claude follows
     references/protocol.md             formats, state machine, config
+    catalog/skills.json                skill catalog (links to GitHub only)
     templates/agents/*.md              role templates the CTO hires from
     templates/docs/                    spec and handoff templates
     scripts/yourteam.mjs               CLI: start | status | action | doctor
-    scripts/lib/                       orchestrator, prompts, store, runner, git, server
+    scripts/lib/                       orchestrator, prompts, store, runner, git, server, skills
     scripts/dashboard/                 the browser UI (no build step)
     scripts/test/                      simulated CLI and self-test
 ```

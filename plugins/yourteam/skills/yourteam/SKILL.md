@@ -14,7 +14,8 @@ YourTeam is an orchestrator plus a dashboard. The orchestrator is a Node program
 5. **QA:** a QA session closes every phase by running the software. Failures go back to their owners as fix sessions, then QA runs again. After the configured number of rounds it escalates to the user.
 6. **CTO chat:** during plan review, the user chats with the CTO and it edits the plan directly (the dashboard shows a diff). During and after the build, the user reports what they tested; the CTO proposes **change orders** (fix phases with QA, new or changed phases, new agents, notes to agents), and nothing changes until the user clicks Apply.
 7. **Gates and checkpoints:** spec and plan approvals; a per-phase **Auto-run** switch (off = the team stops before that phase so the user can test what exists); blocking questions; budget limits; a git commit and tag per phase, which powers the **Review** screen (files changed, diffs, QA result, manual test steps) and rollback. **Run app** starts the product from `.yourteam/run.json` so the user can try it without a terminal.
-8. **Done:** the CTO writes a retrospective and saves its lessons to `~/.yourteam/lessons.md` for future plans.
+8. **Skills:** a catalog (`catalog/skills.json`) lists expert skills on GitHub (Emil Kowalski's design engineering, Ponytail, Impeccable, Taste Skill). The CTO suggests skills per agent while planning; the user adds them in the **Skills** tab (or from any GitHub URL). A skill is downloaded only when added, pinned to the exact commit, and loaded only into the sessions of the agents it was given to.
+9. **Done:** the CTO writes a retrospective and saves its lessons to `~/.yourteam/lessons.md` for future plans.
 
 Everything lives in `<project>/.yourteam/`, so runs survive restarts. The user drives everything from the dashboard at `http://localhost:4477` (or the next free port). You can drive it too, through the CLI.
 
@@ -61,6 +62,10 @@ Some users prefer to describe the product to you directly. In that case:
 | `start-phase` | `{"phase"}` | Start a phase that is waiting at its gate |
 | `app-start` / `app-stop` | | Run or stop the product (from run.json) |
 | `review-phase` | `{"phase"}` | Mark a finished phase as reviewed |
+| `skill-select` | `{"id","agents":[...]}` | Add a catalog skill for these agents (downloads and pins it) or change its agents |
+| `skill-add-url` | `{"url","agents":[...]}` | Add a skill from a GitHub folder URL |
+| `skill-accept-suggestions` | | Add every skill the CTO suggested |
+| `skill-remove` | `{"id"}` | Stop loading a skill |
 | `answer` | `{"id","text"}` | Answer an agent's question (id from `status`) |
 | `resolve` | `{"id","option"}` | Escalations: `retry`, `accept`, `skip-step`, `continue`, `pause` |
 | `pause` / `stop` / `resume` | | Pause after the current session / kill it now / continue |
@@ -77,6 +82,7 @@ Only take actions the user asked for. Approvals, answers, applying change orders
 - The CTO hires from `templates/agents/` (backend, frontend, fullstack, mobile, devops, database, security, designer, docs, data-ml) or writes new roles. Role files are copied into `.yourteam/agents/`, where the user can edit them in the Docs tab.
 - To add a reusable specialist for all future projects, add a template file to `templates/agents/` with the same frontmatter (`id`, `name`, `description`, `model`, `tools`).
 - Models, budgets, retry limits, approval gates, permissions and git checkpoints are all in Settings (`.yourteam/config.json`).
+- Skills are the user's choice. Recommend catalog skills when they fit, but add them only when the user agrees, and warn that skills containing scripts are run by unattended agents.
 
 ## When things go wrong
 
