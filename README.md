@@ -91,31 +91,75 @@ File formats, the state machine and every setting are documented in [`references
 
 ## Built with YourTeam: a real project
 
-YourTeam built **Planner**, a Notion-style Electron desktop app for Windows (React, FullCalendar, BlockNote, SQLite with Drizzle) that keeps all tasks on one calendar, syncs both ways with Google Calendar, and shows native reminders when the window is closed.
+Most screenshots below come from a real project. YourTeam built **Planner**, a Notion-style Electron desktop app for Windows (React, FullCalendar, BlockNote, SQLite with Drizzle) that keeps all tasks on one calendar, syncs both ways with Google Calendar, and shows native reminders when the window is closed.
 
 | | |
 |---|---|
-| Plan | 18 phases, 13 done so far |
+| Plan | 18 phases, 13 done at the time of the screenshots |
 | Team | CEO, CTO, main-process, Google sync, frontend, UI/UX, QA, security and docs agents |
 | Sessions | 63 fresh Claude Code sessions |
 | Cost so far | $38.53 |
 | Average peak context | 7% of the context window per session |
 
+The Interview and Skills screenshots come from a `--demo` run.
+
 ## The dashboard
 
-Everything runs from a local dashboard in your browser. The [demo video](assets/yourteam-demo.mp4) walks through it.
+Watch the [72-second demo video](assets/yourteam-demo.mp4), or browse the views below.
 
-| View | What you do there |
-|---|---|
-| Overview | See the pipeline from interview to done, every phase, spend and anything that needs you |
-| Interview | Answer the CEO's questions as cards with suggested answers, then approve the spec |
-| Plan | Watch phases move from Pending to Done, and turn on **Ask first** for phases you want to test |
-| Inbox | Answer agent questions and pass phase gates, with QA's step-by-step test instructions |
-| CTO chat | Report problems or ask for changes; the CTO proposes change orders you **Apply** |
-| Agents | See the team the CTO hired, change models, edit role files and message agents |
-| Skills | Give agents community skills from GitHub, pinned to an exact version |
-| Live sessions | Follow every agent session and its tool calls as they happen |
-| Usage | Track cost, tokens and context-window use per agent, phase and session |
+### 1. Overview
+
+The pipeline from interview to done, every phase with its team, spend and context use, and anything that needs you.
+
+<img src="assets/screenshots/overview.png" alt="Overview of the Planner project: pipeline at Build 13 of 18 phases, usage, a phase gate waiting for the user, and finished phases" width="900">
+
+### 2. Interview with the CEO
+
+The CEO's replies stream live. Its questions arrive as cards with suggested answers, and a checklist shows how much of the picture is covered.
+
+<img src="assets/screenshots/interview.png" alt="CEO interview with question cards, suggested answers and a coverage checklist" width="900">
+
+### 3. Plan board
+
+Phases move from Pending to Done. Each phase has an **Ask first** switch: turn it on and the team waits for you before starting that phase.
+
+<img src="assets/screenshots/plan.png" alt="Plan board of an 18-phase Electron app: pending phases with Ask first switches, one phase building and finished phases" width="900">
+
+### 4. Inbox and phase gates
+
+When a phase is done, QA leaves you test steps. Try the app, then start the next phase or report a problem to the CTO.
+
+<img src="assets/screenshots/inbox.png" alt="Inbox with a phase gate: how to test the Windows installer phase, with Start P9, Run app, Review and Report to CTO buttons" width="900">
+
+### 5. Agents
+
+The team the CTO hired, with a role written for this project. Change an agent's model, see its skills, sessions, cost and peak context, edit its role file, or send it a message.
+
+<img src="assets/screenshots/agents.png" alt="Agents view with CEO, CTO, main-process engineer, Google sync engineer, frontend engineer, QA, security reviewer and technical writer" width="900">
+
+### 6. Skills
+
+Give agents expert skills from GitHub. Each skill is pinned to the exact version you added and loaded only into the agents you pick.
+
+<img src="assets/screenshots/skills.png" alt="Skills view with two pinned skills assigned to agents and a catalog of community skills" width="900">
+
+### 7. Live sessions
+
+Every session the team ran, each in a fresh context. Follow the running one to see its tool calls as they happen.
+
+<img src="assets/screenshots/live.png" alt="Live sessions view following a main-process engineer session that reads the project conventions" width="900">
+
+### 8. CTO chat and change orders
+
+Ask the CTO anything or tell it what you found while testing. It works out which agent owns the problem and proposes change orders. Nothing changes until you click **Apply**.
+
+<img src="assets/screenshots/cto.png" alt="CTO chat explaining how to update the installed app without losing data, next to the change orders panel" width="900">
+
+### 9. Usage
+
+Cost, tokens and context-window use per agent, phase and session type.
+
+<img src="assets/screenshots/usage.png" alt="Usage view of the Planner project: $38.53 total, cost by agent, by phase and by session type" width="900">
 
 ## Install
 
