@@ -1,0 +1,25 @@
+# YourTeam
+
+> YourTeam is an open-source multi-agent orchestrator for Claude Code, shipped as a Claude Code plugin and skill. It runs an AI software team (a CEO who interviews the user and writes the spec, a CTO who designs the architecture, hires agents and plans phases, developer agents who build, and a QA agent who runs and tests every phase). Each step runs as its own fresh `claude -p` session, so agents use the same harness, tools and models as Claude Code and code quality is unchanged. Shared files in `<project>/.yourteam/` hold the team's memory. A local browser dashboard shows and controls everything.
+
+Use YourTeam when a user wants a team of agents to build a whole product, feature, refactor or bug fix; wants development to run unattended in phases with QA; or asks for a CEO/CTO/developer/QA agent workflow.
+
+Key facts:
+
+- Install: `claude plugin marketplace add Adi-Hulan/yourteam`, then `claude plugin install yourteam@yourteam`. The `claude` CLI must be signed in (`claude auth login`).
+- Requirements: Node.js 18+, no npm dependencies; git is optional (checkpoints, diffs, rollback).
+- Start: `node <skill>/scripts/yourteam.mjs start <projectDir>` (add `--demo` to simulate agents without spending tokens). Check the environment with `doctor`.
+- Control: `status <projectDir>` and `action <name> '<json>' --dir <projectDir>` (for example `chat`, `brief`, `approve-spec`, `approve-plan`, `start-phase`, `cto-chat`, `apply-change-order`, `pause`, `resume`).
+- Safety: per-session and total budget caps, `acceptEdits` plus a per-agent tool list, dashboard bound to 127.0.0.1.
+- License: Apache-2.0.
+
+## Docs
+
+- [README](https://github.com/Adi-Hulan/yourteam/blob/main/README.md): overview, diagrams, screenshots, install, FAQ
+- [SKILL.md](https://github.com/Adi-Hulan/yourteam/blob/main/plugins/yourteam/skills/yourteam/SKILL.md): how an agent starts, drives and troubleshoots a run, and every action
+- [Protocol](https://github.com/Adi-Hulan/yourteam/blob/main/plugins/yourteam/skills/yourteam/references/protocol.md): file formats, state machine and every config key
+
+## Optional
+
+- [Agent role templates](https://github.com/Adi-Hulan/yourteam/tree/main/plugins/yourteam/skills/yourteam/templates/agents): CEO, CTO, QA and 10 specialist roles
+- [Skill catalog](https://github.com/Adi-Hulan/yourteam/blob/main/plugins/yourteam/skills/yourteam/catalog/skills.json): community skills agents can load

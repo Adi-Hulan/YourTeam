@@ -6,5 +6,23 @@
     "name": "Adi-Hulan"
   },
   "license": "Apache-2.0",
-  "keywords": ["multi-agent", "orchestration", "dashboard", "qa", "planning"]
+  "keywords": [
+    "multi-agent",
+    "orchestrator",
+    "orchestration",
+    "ai-agents",
+    "agent-team",
+    "software-team",
+    "autonomous-coding",
+    "claude-code",
+    "claude-code-plugin",
+    "claude-code-skill",
+    "ceo",
+    "cto",
+    "qa",
+    "planning",
+    "dashboard"
+  ],
+  "homepage": "https://github.com/Adi-Hulan/yourteam",
+  "repository": "https://github.com/Adi-Hulan/yourteam"
 }
