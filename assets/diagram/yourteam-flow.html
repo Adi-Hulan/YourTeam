@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How YourTeam builds your product</title>
+  <!-- Drawn with the diagram-design skill (github.com/cathrynlavery/diagram-design), YourTeam dark skin. -->
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #0a0a0a;
+      --color-ink:     #ededed;
+      --color-muted:   #a1a1a1;
+      --color-accent:  #3291ff;
+      --font-sans:     'Geist', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+    .frame { max-width: 1200px; width: 100%; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      color: var(--color-ink);
+      margin-bottom: 1.5rem;
+    }
+    svg { width: 100%; min-width: 960px; display: block; }
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Process · YourTeam</p>
+    <h1>How YourTeam builds your product</h1>
+
+    <div class="diagram-container">
+      <svg id="yourteam-flow" viewBox="0 0 960 548" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="yourteam-flow-title yourteam-flow-desc">
+        <title id="yourteam-flow-title">How YourTeam builds your product</title>
+        <desc id="yourteam-flow-desc">The user chats with a CEO agent who writes the spec, a CTO agent plans the architecture, team and phases, developers build each phase, and QA runs the app, sending failures back as fixes and passing phases on, with every agent running as a fresh Claude Code session that shares memory through files.</desc>
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#a1a1a1"/></marker>
+          <marker id="arrow-start" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto"><polygon points="8 0, 0 3, 8 6" fill="#a1a1a1"/></marker>
+          <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#3291ff"/></marker>
+          <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#52a8ff"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#0a0a0a"/>
+
+        <!-- Zone: the orchestrator -->
+        <rect x="216" y="40" width="712" height="432" rx="8" fill="none" stroke="rgba(237,237,237,0.14)" stroke-width="1"/>
+        <text x="232" y="460" fill="#8f8f8f" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" font-weight="500" letter-spacing="0.18em">YOURTEAM ORCHESTRATOR · EVERY BOX RUNS AS A FRESH CLAUDE -P SESSION</text>
+
+        <!-- Arrows first -->
+        <!-- You → CEO -->
+        <line x1="160" y1="128" x2="231" y2="128" stroke="#a1a1a1" stroke-width="1" marker-end="url(#arrow)"/>
+        <rect x="172" y="108" width="32" height="12" rx="2" fill="#0a0a0a"/>
+        <text x="188" y="117" fill="#8f8f8f" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">CHAT</text>
+
+        <!-- CEO → CTO -->
+        <line x1="412" y1="128" x2="483" y2="128" stroke="#a1a1a1" stroke-width="1" marker-end="url(#arrow)"/>
+        <rect x="432" y="108" width="32" height="12" rx="2" fill="#0a0a0a"/>
+        <text x="448" y="117" fill="#8f8f8f" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">SPEC</text>
+
+        <!-- You → CTO: feedback and change orders -->
+        <path d="M96 96 V80 A8 8 0 0 1 104 72 H616 A8 8 0 0 1 624 80 V95" fill="none" stroke="#a1a1a1" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <rect x="316" y="52" width="88" height="12" rx="2" fill="#0a0a0a"/>
+        <text x="360" y="61" fill="#8f8f8f" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">CHANGE ORDERS</text>
+
+        <!-- CTO → Developers -->
+        <path d="M544 160 V208 A8 8 0 0 1 536 216 H300 A8 8 0 0 0 292 224 V279" fill="none" stroke="#a1a1a1" stroke-width="1" marker-end="url(#arrow)"/>
+        <rect x="402" y="196" width="32" height="12" rx="2" fill="#0a0a0a"/>
+        <text x="418" y="205" fill="#8f8f8f" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">PLAN</text>
+
+        <!-- Developers → QA -->
+        <line x1="412" y1="304" x2="483" y2="304" stroke="#a1a1a1" stroke-width="1" marker-end="url(#arrow)"/>
+        <rect x="424" y="284" width="48" height="12" rx="2" fill="#0a0a0a"/>
+        <text x="448" y="293" fill="#8f8f8f" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">HANDOFF</text>
+
+        <!-- QA → Developers: failures become fixes -->
+        <line x1="484" y1="336" x2="413" y2="336" stroke="#a1a1a1" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <rect x="420" y="344" width="56" height="12" rx="2" fill="#0a0a0a"/>
+        <text x="448" y="353" fill="#8f8f8f" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">FAIL: FIX</text>
+
+        <!-- QA → Phase done (headline path) -->
+        <line x1="684" y1="316" x2="751" y2="316" stroke="#3291ff" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+        <rect x="702" y="296" width="32" height="12" rx="2" fill="#0a0a0a"/>
+        <text x="718" y="305" fill="#3291ff" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">PASS</text>
+
+        <!-- Phase done → next phase -->
+        <path d="M824 280 V256 A8 8 0 0 0 816 248 H360 A8 8 0 0 0 352 256 V279" fill="none" stroke="#a1a1a1" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <rect x="708" y="228" width="64" height="12" rx="2" fill="#0a0a0a"/>
+        <text x="740" y="237" fill="#8f8f8f" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">NEXT PHASE</text>
+
+        <!-- Sessions ↔ shared memory -->
+        <line x1="322" y1="353" x2="322" y2="391" stroke="#a1a1a1" stroke-width="1" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+        <line x1="584" y1="353" x2="584" y2="391" stroke="#a1a1a1" stroke-width="1" marker-start="url(#arrow-start)" marker-end="url(#arrow)"/>
+
+        <!-- Nodes -->
+        <!-- You (input) -->
+        <rect x="32" y="96" width="128" height="64" rx="6" fill="#0a0a0a"/>
+        <rect x="32" y="96" width="128" height="64" rx="6" fill="rgba(161,161,161,0.10)" stroke="#8f8f8f" stroke-width="1"/>
+        <rect x="40" y="102" width="28" height="12" rx="2" fill="transparent" stroke="rgba(143,143,143,0.40)" stroke-width="0.8"/>
+        <text x="54" y="111" fill="rgba(143,143,143,0.9)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">USER</text>
+        <text x="96" y="134" fill="#ededed" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">You</text>
+        <text x="96" y="150" fill="#a1a1a1" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">the customer</text>
+
+        <!-- CEO -->
+        <rect x="232" y="96" width="180" height="64" rx="6" fill="#0a0a0a"/>
+        <rect x="232" y="96" width="180" height="64" rx="6" fill="#141414" stroke="rgba(237,237,237,0.55)" stroke-width="1"/>
+        <rect x="240" y="102" width="36" height="12" rx="2" fill="transparent" stroke="rgba(237,237,237,0.30)" stroke-width="0.8"/>
+        <text x="258" y="111" fill="rgba(237,237,237,0.7)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">AGENT</text>
+        <text x="322" y="134" fill="#ededed" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">CEO</text>
+        <text x="322" y="150" fill="#a1a1a1" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">interview → spec.md</text>
+
+        <!-- CTO -->
+        <rect x="484" y="96" width="200" height="64" rx="6" fill="#0a0a0a"/>
+        <rect x="484" y="96" width="200" height="64" rx="6" fill="#141414" stroke="rgba(237,237,237,0.55)" stroke-width="1"/>
+        <rect x="492" y="102" width="36" height="12" rx="2" fill="transparent" stroke="rgba(237,237,237,0.30)" stroke-width="0.8"/>
+        <text x="510" y="111" fill="rgba(237,237,237,0.7)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">AGENT</text>
+        <text x="584" y="134" fill="#ededed" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">CTO</text>
+        <text x="584" y="150" fill="#a1a1a1" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">architecture · team · phases</text>
+
+        <!-- Developers -->
+        <rect x="232" y="280" width="180" height="72" rx="6" fill="#0a0a0a"/>
+        <rect x="232" y="280" width="180" height="72" rx="6" fill="#141414" stroke="rgba(237,237,237,0.55)" stroke-width="1"/>
+        <rect x="240" y="286" width="36" height="12" rx="2" fill="transparent" stroke="rgba(237,237,237,0.30)" stroke-width="0.8"/>
+        <text x="258" y="295" fill="rgba(237,237,237,0.7)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">AGENT</text>
+        <text x="322" y="322" fill="#ededed" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Developers</text>
+        <text x="322" y="338" fill="#a1a1a1" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">backend → frontend</text>
+
+        <!-- QA (focal) -->
+        <rect x="484" y="280" width="200" height="72" rx="6" fill="#0a0a0a"/>
+        <rect x="484" y="280" width="200" height="72" rx="6" fill="rgba(50,145,255,0.12)" stroke="#3291ff" stroke-width="1.2"/>
+        <rect x="492" y="286" width="28" height="12" rx="2" fill="transparent" stroke="rgba(50,145,255,0.50)" stroke-width="0.8"/>
+        <text x="506" y="295" fill="#3291ff" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">GATE</text>
+        <text x="584" y="322" fill="#ededed" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">QA</text>
+        <text x="584" y="338" fill="#a1a1a1" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">runs the app · checks criteria</text>
+
+        <!-- Phase done -->
+        <rect x="752" y="280" width="144" height="72" rx="6" fill="#0a0a0a"/>
+        <rect x="752" y="280" width="144" height="72" rx="6" fill="rgba(237,237,237,0.03)" stroke="rgba(237,237,237,0.30)" stroke-width="1"/>
+        <rect x="760" y="286" width="24" height="12" rx="2" fill="transparent" stroke="rgba(237,237,237,0.30)" stroke-width="0.8"/>
+        <text x="772" y="295" fill="rgba(237,237,237,0.7)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">GIT</text>
+        <text x="824" y="322" fill="#ededed" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Phase done</text>
+        <text x="824" y="338" fill="#a1a1a1" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">commit + tag</text>
+
+        <!-- Shared memory (store) -->
+        <rect x="232" y="392" width="664" height="48" rx="6" fill="#0a0a0a"/>
+        <rect x="232" y="392" width="664" height="48" rx="6" fill="rgba(237,237,237,0.05)" stroke="#a1a1a1" stroke-width="1"/>
+        <rect x="240" y="398" width="36" height="12" rx="2" fill="transparent" stroke="rgba(161,161,161,0.40)" stroke-width="0.8"/>
+        <text x="258" y="407" fill="rgba(161,161,161,0.9)" font-size="7" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">FILES</text>
+        <text x="564" y="413" fill="#ededed" font-size="12" font-weight="600" font-family="'Geist', system-ui, sans-serif" text-anchor="middle">Shared memory</text>
+        <text x="564" y="429" fill="#a1a1a1" font-size="9" font-family="'Geist Mono', ui-monospace, monospace" text-anchor="middle">.yourteam/ · spec · architecture · contracts · handoffs · messages</text>
+
+        <!-- Legend -->
+        <line x1="30" y1="496" x2="930" y2="496" stroke="rgba(237,237,237,0.10)" stroke-width="0.8"/>
+        <text x="32" y="524" fill="#a1a1a1" font-size="8" font-family="'Geist Mono', ui-monospace, monospace" letter-spacing="0.14em">LEGEND</text>
+        <rect x="104" y="514" width="16" height="12" rx="2" fill="#141414" stroke="rgba(237,237,237,0.55)" stroke-width="1"/>
+        <text x="128" y="524" fill="#a1a1a1" font-size="9" font-family="'Geist', system-ui, sans-serif">Agent session</text>
+        <rect x="248" y="514" width="16" height="12" rx="2" fill="rgba(50,145,255,0.12)" stroke="#3291ff" stroke-width="1.2"/>
+        <text x="272" y="524" fill="#a1a1a1" font-size="9" font-family="'Geist', system-ui, sans-serif">Quality gate</text>
+        <rect x="384" y="514" width="16" height="12" rx="2" fill="rgba(237,237,237,0.05)" stroke="#a1a1a1" stroke-width="1"/>
+        <text x="408" y="524" fill="#a1a1a1" font-size="9" font-family="'Geist', system-ui, sans-serif">Shared files</text>
+        <line x1="520" y1="520" x2="552" y2="520" stroke="#a1a1a1" stroke-width="1" marker-end="url(#arrow)"/>
+        <text x="560" y="524" fill="#a1a1a1" font-size="9" font-family="'Geist', system-ui, sans-serif">Main flow</text>
+        <line x1="648" y1="520" x2="680" y2="520" stroke="#a1a1a1" stroke-width="1" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <text x="688" y="524" fill="#a1a1a1" font-size="9" font-family="'Geist', system-ui, sans-serif">Loop or feedback</text>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>

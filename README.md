@@ -12,7 +12,7 @@ You describe the product. The team plans it, builds it phase by phase, and tests
   <img alt="Zero npm dependencies" src="https://img.shields.io/badge/dependencies-0-brightgreen">
 </p>
 
-<p align="center"><img src="assets/screenshots/overview.png" alt="YourTeam dashboard overview: pipeline from interview to done, phases, usage and the agent inbox" width="900"></p>
+<p align="center"><img src="assets/screenshots/overview.png" alt="YourTeam dashboard overview of a real 18-phase project: pipeline, phases, usage and a phase gate waiting for the user" width="900"></p>
 
 ## TL;DR
 
@@ -25,8 +25,8 @@ You describe the product. The team plans it, builds it phase by phase, and tests
 ## Contents
 
 - [Why YourTeam](#why-yourteam)
-- [Same agent harness as Claude Code](#same-agent-harness-as-claude-code)
 - [How it works](#how-it-works)
+- [Built with YourTeam: a real project](#built-with-yourteam-a-real-project)
 - [The dashboard](#the-dashboard)
 - [Install](#install)
 - [Quick start](#quick-start)
@@ -50,23 +50,23 @@ One long AI coding session works well for small tasks. For a whole product, it r
 | You have to watch it the whole time | Phases **run unattended**, and failures go back to their owners automatically |
 | Hard to see what happened | A **live dashboard** shows every session, diff, message, cost and QA result |
 
-## Same agent harness as Claude Code
+## How it works
 
-YourTeam is an **orchestrator**, not a new coding agent. It doesn't call a model API directly, and it doesn't wrap the model in a different harness.
+<p align="center"><img src="assets/yourteam-flow.png" alt="YourTeam flow: you chat with the CEO, who writes the spec; the CTO plans architecture, team and phases; developers build each phase and hand off to QA; QA runs the app, sends failures back as fixes and passes finished phases on to a git commit; every agent runs as a fresh Claude Code session and shares memory through the .yourteam folder" width="900"></p>
 
-```mermaid
-flowchart TD
-    B["Your browser: live dashboard"] <--> O["YourTeam orchestrator: one Node.js process<br/>starts one fresh session per step"]
-    O --> S1 & S2 & S3 & S4 & S5
-    subgraph CC["Claude Code CLI: the same harness you already use"]
-        S1["claude -p<br/>CEO"]
-        S2["claude -p<br/>CTO"]
-        S3["claude -p<br/>Backend"]
-        S4["claude -p<br/>Frontend"]
-        S5["claude -p<br/>QA"]
-    end
-    S1 & S2 & S3 & S4 & S5 --> F[("Shared files in .yourteam/<br/>spec · architecture · contracts · handoffs")]
-```
+<p align="center"><sub>Drawn with <a href="https://github.com/cathrynlavery/diagram-design">diagram-design</a>. Source: <a href="assets/diagram/yourteam-flow.html"><code>assets/diagram/yourteam-flow.html</code></a></sub></p>
+
+1. **You chat with the CEO.** It interviews you and writes `spec.md`, which you approve.
+2. **The CTO plans.** It picks the stack, writes the architecture and API contracts, hires the team and splits the work into phases. You approve the plan.
+3. **Developers build each phase.** Backend runs before frontend, and each step is a fresh session that starts from the handoff notes.
+4. **QA runs the app** and checks every acceptance criterion. Failures go back to the agent that owns them as fixes. A passing phase is committed and tagged in git, and the next phase starts.
+5. **You test whenever you like** and tell the CTO what you found. It turns your feedback into change orders, such as a fix phase with its own QA run.
+
+If an agent runs out of room, it writes a handoff and a new session continues the work. If it needs a decision, the question shows up in your Inbox. If QA keeps failing, the team escalates to you instead of looping forever.
+
+### Same agent harness as Claude Code
+
+YourTeam is an **orchestrator**, not a new coding agent. It doesn't call a model API directly, and it doesn't wrap the model in a different harness. Every box in the diagram is a real `claude -p` session.
 
 - **Same tools:** agents use Claude Code's own Read, Edit, Write, Bash, Grep and other tools, with Claude Code's permission system.
 - **Same models:** Opus for the CEO and CTO and Sonnet for the rest by default. You can change the model per agent.
@@ -74,60 +74,7 @@ flowchart TD
 - **Same sign-in:** sessions use your own Claude Code CLI login. YourTeam never handles API keys.
 - **Code quality is unchanged:** the code is written by Claude Code itself. YourTeam adds structure around it (a spec, an architecture, contracts, a QA gate), so code quality is the same, and usually more consistent across a large project.
 
-## How it works
-
-### The pipeline
-
-```mermaid
-flowchart TD
-    U(["You"]) -->|chat| CEO["CEO interview"]
-    CEO -->|spec.md| R1(["You approve the spec"])
-    R1 --> CTO["CTO: stack · architecture · contracts · team · plan"]
-    CTO -->|plan.json| R2(["You approve the plan"])
-    R2 --> P1["Phase 1 + QA"] --> P2["Phase 2 + QA"] --> PN["Phase N + QA"]
-    PN --> RETRO["CTO retro: lessons for next time"]
-    U -.->|test and report in CTO chat| CO["Change orders: fix phases + QA"]
-    CO -.-> P2
-```
-
-### Inside one phase
-
-Each box below is a **separate, fresh Claude Code session**. Backend runs before frontend, and QA closes every phase.
-
-```mermaid
-flowchart TD
-    START(["Phase starts<br/>git tag P-start"]) --> BE["Backend agent<br/>fresh session"]
-    BE -->|handoff note| FE["Frontend agent<br/>fresh session"]
-    FE -->|bug report| FIX["Backend fix<br/>fresh session"]
-    FIX -->|fix done| FE2["Frontend continues<br/>fresh session"]
-    FE -->|done| QA["QA agent<br/>runs the app, checks criteria"]
-    FE2 --> QA
-    QA -->|pass| DONE(["Commit + git tag P-done"])
-    QA -->|fail| FIXQ["Issues become fix sessions<br/>for the owning agent"]
-    FIXQ --> QA
-```
-
-If an agent runs out of room, it writes a handoff and a new session continues the work. If it needs a decision, the question shows up in your Inbox. If QA keeps failing, the team escalates to you instead of looping forever.
-
 ### Memory lives in files, not chat history
-
-```mermaid
-flowchart LR
-    subgraph S1["Session 1"]
-        A1["Backend agent"]
-    end
-    subgraph S2["Session 2"]
-        A2["Frontend agent"]
-    end
-    subgraph S3["Session 3"]
-        A3["QA agent"]
-    end
-    FILES[("spec.md · architecture.md<br/>contracts/ · handoffs/<br/>messages.json")]
-    A1 -->|writes| FILES
-    FILES -->|reads only what it needs| A2
-    A2 -->|writes| FILES
-    FILES -->|reads| A3
-```
 
 Everything lives in `<project>/.yourteam/`, so a run survives restarts:
 
@@ -142,39 +89,75 @@ Everything lives in `<project>/.yourteam/`, so a run survives restarts:
 
 File formats, the state machine and every setting are documented in [`references/protocol.md`](plugins/yourteam/skills/yourteam/references/protocol.md).
 
+## Built with YourTeam: a real project
+
+Most screenshots below come from a real project. YourTeam built **Planner**, a Notion-style Electron desktop app for Windows (React, FullCalendar, BlockNote, SQLite with Drizzle) that keeps all tasks on one calendar, syncs both ways with Google Calendar, and shows native reminders when the window is closed.
+
+| | |
+|---|---|
+| Plan | 18 phases, 13 done at the time of the screenshots |
+| Team | CEO, CTO, main-process, Google sync, frontend, UI/UX, QA, security and docs agents |
+| Sessions | 63 fresh Claude Code sessions |
+| Cost so far | $38.53 |
+| Average peak context | 7% of the context window per session |
+
+The Interview and Skills screenshots come from a `--demo` run.
+
 ## The dashboard
 
-All screenshots come from a `--demo` run.
+### 1. Overview
 
-### 1. Interview with the CEO
+The pipeline from interview to done, every phase with its team, spend and context use, and anything that needs you.
+
+<img src="assets/screenshots/overview.png" alt="Overview of the Planner project: pipeline at Build 13 of 18 phases, usage, a phase gate waiting for the user, and finished phases" width="900">
+
+### 2. Interview with the CEO
 
 The CEO's replies stream live. Its questions arrive as cards with suggested answers, and a checklist shows how much of the picture is covered.
 
 <img src="assets/screenshots/interview.png" alt="CEO interview with question cards, suggested answers and a coverage checklist" width="900">
 
-### 2. Plan board
+### 3. Plan board
 
-Phases move from Pending to Done. Each phase has an **Auto-run** switch: turn it off and the team waits for you before starting that phase.
+Phases move from Pending to Done. Each phase has an **Ask first** switch: turn it on and the team waits for you before starting that phase.
 
-<img src="assets/screenshots/plan.png" alt="Plan board with phase columns, phase steps, acceptance criteria and QA checks" width="900">
+<img src="assets/screenshots/plan.png" alt="Plan board of an 18-phase Electron app: pending phases with Ask first switches, one phase building and finished phases" width="900">
 
-### 3. Phase review
+### 4. Inbox and phase gates
 
-See every file a phase changed, its QA result and the manual test steps. Click **Looks good**, or **Report a problem** to send it to the CTO.
+When a phase is done, QA leaves you test steps. Try the app, then start the next phase or report a problem to the CTO.
 
-<img src="assets/screenshots/review.png" alt="Phase review with QA pass, files changed with diffs and manual test checklist" width="900">
+<img src="assets/screenshots/inbox.png" alt="Inbox with a phase gate: how to test the Windows installer phase, with Start P9, Run app, Review and Report to CTO buttons" width="900">
 
-### 4. CTO chat and change orders
+### 5. Agents
 
-Tell the CTO what you found while testing. It works out which agent owns the problem and proposes a change order. Nothing changes until you click **Apply**.
+The team the CTO hired, with a role written for this project. Change an agent's model, see its skills, sessions, cost and peak context, edit its role file, or send it a message.
 
-<img src="assets/screenshots/cto.png" alt="CTO chat proposing a fix change order for the frontend engineer" width="900">
+<img src="assets/screenshots/agents.png" alt="Agents view with CEO, CTO, main-process engineer, Google sync engineer, frontend engineer, QA, security reviewer and technical writer" width="900">
 
-### 5. Usage
+### 6. Skills
 
-Cost, tokens and context-window use per agent, phase and session.
+Give agents expert skills from GitHub. Each skill is pinned to the exact version you added and loaded only into the agents you pick.
 
-<img src="assets/screenshots/usage.png" alt="Usage view with cost by agent, by phase and by session type, plus a session table" width="900">
+<img src="assets/screenshots/skills.png" alt="Skills view with two pinned skills assigned to agents and a catalog of community skills" width="900">
+
+### 7. Live sessions
+
+Every session the team ran, each in a fresh context. Follow the running one to see its tool calls as they happen.
+
+<img src="assets/screenshots/live.png" alt="Live sessions view following a main-process engineer session that reads the project conventions" width="900">
+
+### 8. CTO chat and change orders
+
+Ask the CTO anything or tell it what you found while testing. It works out which agent owns the problem and proposes change orders. Nothing changes until you click **Apply**.
+
+<img src="assets/screenshots/cto.png" alt="CTO chat explaining how to update the installed app without losing data, next to the change orders panel" width="900">
+
+### 9. Usage
+
+Cost, tokens and context-window use per agent, phase and session type.
+
+<img src="assets/screenshots/usage.png" alt="Usage view of the Planner project: $38.53 total, cost by agent, by phase and by session type" width="900">
 
 ## Install
 
@@ -260,13 +243,10 @@ Give agents expert [Claude Code skills](https://docs.claude.com/en/docs/claude-c
 | Impeccable | [pbakaus/impeccable](https://github.com/pbakaus/impeccable) | Frontend design system and design audits |
 | Taste Skill | [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill) | Art direction for landing pages and marketing sites |
 
-```mermaid
-flowchart LR
-    CTO["CTO suggests skills<br/>per agent"] --> YOU{"You add, change<br/>or skip"}
-    YOU --> DL["Downloaded from GitHub<br/>pinned to a commit"]
-    DL --> PRE["Preview SKILL.md<br/>and scripts"]
-    PRE --> AG["Loaded only into<br/>that agent's sessions"]
-```
+- **The CTO suggests:** while planning, the CTO recommends skills for specific agents. You accept, change or skip them.
+- **You add:** pick a catalog skill and the agents that should use it, or paste a link to any GitHub folder that contains a `SKILL.md`.
+- **Pinned and previewed:** the skill is downloaded at that moment and pinned to the exact commit. Preview its `SKILL.md` and scripts before the team uses it.
+- **Only where needed:** each agent loads only its own skills, which keeps token use down.
 
 Skills run inside agents that work unattended with shell access, so only add skills from sources you trust. Want a skill in the catalog? Open a pull request that adds it to [`catalog/skills.json`](plugins/yourteam/skills/yourteam/catalog/skills.json).
 
